@@ -1,0 +1,3 @@
+package com.ko2ic.viewmodel
+
+interface CollectionItemViewModel
