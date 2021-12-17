@@ -2,9 +2,12 @@ package ko2ic.sample.ui
 
 import androidx.databinding.ObservableArrayList
 import androidx.databinding.ObservableField
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ko2ic.viewmodel.CollectionItemViewModel
+import ko2ic.sample.dto.CommentItemDto
 import ko2ic.sample.repository.CommentRepository
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
@@ -19,6 +22,7 @@ class MainViewModel : ViewModel() {
 
     init {
         fetchList()
+        //fetchList2()
     }
 
     fun onRefresh() {
@@ -41,7 +45,19 @@ class MainViewModel : ViewModel() {
         }.launchIn(viewModelScope)
     }
 
-//    fun fetchList2(): Flow<List<CommentItemDto>> {
-//        return CommentRepository().fetchComments()
-//    }
+
+    private val _items = MutableLiveData<List<CommentItemDto>>()
+    val items: LiveData<List<CommentItemDto>> get() = _items
+
+    private fun fetchList2() {
+        CommentRepository().fetchComments().onEach {
+            _items.value = it
+        }.catch { cause ->
+            // TODO エラー処理
+            throw cause
+        }.onCompletion {
+            isLoadingForRefresh.set(false)
+        }.launchIn(viewModelScope)
+    }
+
 }

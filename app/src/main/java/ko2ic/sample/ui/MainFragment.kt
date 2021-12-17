@@ -5,12 +5,18 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.ko2ic.recyclerview.adapter.ItemViewTypeProvider
 import com.ko2ic.recyclerview.adapter.RecyclerViewAdapter
 import com.ko2ic.viewmodel.CollectionItemViewModel
+import com.xwray.groupie.GroupieAdapter
+import com.xwray.groupie.Section
+import com.xwray.groupie.databinding.BindableItem
 import ko2ic.sample.R
 import ko2ic.sample.databinding.ListItemImageMainBinding
+import ko2ic.sample.databinding.ListItemMainContentBinding
+import ko2ic.sample.databinding.ListItemMainHeaderBinding
 import ko2ic.sample.databinding.MainFragmentBinding
 
 class MainFragment : Fragment(R.layout.main_fragment) {
@@ -31,22 +37,13 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         val itemViewTypeProvider = object : ItemViewTypeProvider {
             override fun getLayoutRes(modelCollectionItem: CollectionItemViewModel): Int {
                 return when (modelCollectionItem) {
-                    is HeaderViewModel -> {
-                        R.layout.list_item_main_header
-                    }
-                    is CommentItemViewModel -> {
-                        R.layout.list_item_main_content
-                    }
-                    is ImageMainViewModel -> {
-                        R.layout.list_item_image_main
-                    }
-                    is ImageItemViewModel -> {
-                        R.layout.list_item_image
-                    }
+                    is HeaderViewModel -> R.layout.list_item_main_header
+                    is CommentItemViewModel -> R.layout.list_item_main_content
+                    is ImageMainViewModel -> R.layout.list_item_image_main
+                    is ImageItemViewModel -> R.layout.list_item_image
                     else -> throw IllegalArgumentException("Unexpected layout")
                 }
             }
-
         }
 
         binding.recyclerView.adapter = RecyclerViewAdapter(viewModel.viewModels, itemViewTypeProvider)
@@ -64,34 +61,29 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             }
         }
 
-//        val adapter = GroupieAdapter()
+        val adapter = GroupieAdapter()
 //        binding.recyclerView.adapter = adapter
-//
-//        viewModel.fetchList2().onEach {
-//            val commentItemViewModels = it.map { ContentViewHolder(CommentItemViewModel(it)) }
-//            val section = Section()
-//            section.setHeader(HeaderViewHolder(HeaderViewModel))
-//            section.addAll(commentItemViewModels)
-//            adapter.add(section)
-//        }.catch { cause ->
-//            // TODO エラー処理
-//            throw cause
-//        }.onCompletion {
-//            viewModel.isLoadingForRefresh.set(false)
-//        }.launchIn(lifecycleScope)
-//    }
-//
-//    class HeaderViewHolder(private val viewModel: HeaderViewModel) : BindableItem<ListItemMainHeaderBinding>() {
-//        override fun getLayout(): Int = R.layout.list_item_main_header
-//        override fun bind(viewBinding: ListItemMainHeaderBinding, position: Int) {
-//            viewBinding.viewModel = viewModel
-//        }
-//    }
-//
-//    class ContentViewHolder(private val viewModel: CommentItemViewModel) : BindableItem<ListItemMainContentBinding>() {
-//        override fun getLayout(): Int = R.layout.list_item_main_content
-//        override fun bind(viewBinding: ListItemMainContentBinding, position: Int) {
-//            viewBinding.viewModel = viewModel
-//        }
+
+        viewModel.items.observe(viewLifecycleOwner, Observer {
+            val commentItemViewModels = it.map { ContentViewHolder(CommentItemViewModel(it)) }
+            val section = Section()
+            section.setHeader(HeaderViewHolder(HeaderViewModel))
+            section.addAll(commentItemViewModels)
+            adapter.add(section)
+        })
+    }
+
+    class HeaderViewHolder(private val viewModel: HeaderViewModel) : BindableItem<ListItemMainHeaderBinding>() {
+        override fun getLayout(): Int = R.layout.list_item_main_header
+        override fun bind(viewBinding: ListItemMainHeaderBinding, position: Int) {
+            viewBinding.viewModel = viewModel
+        }
+    }
+
+    class ContentViewHolder(private val viewModel: CommentItemViewModel) : BindableItem<ListItemMainContentBinding>() {
+        override fun getLayout(): Int = R.layout.list_item_main_content
+        override fun bind(viewBinding: ListItemMainContentBinding, position: Int) {
+            viewBinding.viewModel = viewModel
+        }
     }
 }
